@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> LavenderTaskUI </title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        /* --- CSS Reset & Base Styles --- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background-color: #E6E6FA;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* --- Main Card Container --- */
+        .todo-container {
+            width: 380px;
+            position: relative;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(118, 85, 225, 0.15);
+            display: flex;
+            flex-direction: column;
+            /* Height auto-adjusts based on content */
+            transition: height 0.3s ease;
+        }
+
+        /* --- Header Section --- */
+        .header {
+            background: #AC7BF3;
+            padding: 20px;
+            border-top-left-radius: 10px;
+            border-top-right-radius: 10px;
+            display: flex;
+            align-items: center;
+            color: white;
+            position: relative;
+            z-index: 10;
+        }
+
+        .header-icon {
+            font-size: 24px;
+            cursor: pointer;
+            margin-right: 15px;
+            transition: transform 0.2s;
+        }
+
+        .header-icon:active {
+            transform: scale(0.9);
+        }
+
+        .header-title {
+            font-weight: 600;
+            font-size: 18px;
+            text-align: center;
+            flex-grow: 1;
+            padding-right: 30px;
+        }
+
+        /* --- Menu Dropdown (New) --- */
+        .menu-dropdown {
+            position: absolute;
+            top: 60px;
+            left: 20px;
+            background: white;
+            width: 150px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            display: none;
+            /* Hidden by default */
+            flex-direction: column;
+            z-index: 20;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .menu-dropdown.show {
+            display: flex;
+        }
+
+        .menu-item {
+            padding: 10px 15px;
+            font-size: 14px;
+            color: #555;
+            cursor: pointer;
+            transition: background 0.2s;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .menu-item:last-child {
+            border-bottom: none;
+        }
+
+        .menu-item:hover {
+            background: #f8f8f8;
+            color: #AC7BF3;
+        }
+
+        /* --- List Section --- */
+        .todo-list {
+            background: white;
+            padding: 30px 20px 60px 20px;
+            /* Big bottom padding for button space */
+            border-bottom-left-radius: 10px;
+            border-bottom-right-radius: 10px;
+            list-style: none;
+            min-height: 200px;
+            /* Minimum height */
+            /* No max-height so it expands */
+        }
+
+        .todo-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 0;
+            color: #6C757D;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-bottom: 1px solid transparent;
+        }
+
+        /* Animation for new items */
+        .todo-item.new-item {
+            animation: slideIn 0.3s ease forwards;
+        }
+
+        /* --- Radio/Checkbox Styling --- */
+        .radio-circle {
+            width: 18px;
+            height: 18px;
+            border: 2px solid #AC7BF3;
+            border-radius: 50%;
+            margin-right: 15px;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-shrink: 0;
+            /* Prevent shrinking */
+        }
+
+        .radio-circle::after {
+            content: '';
+            width: 10px;
+            height: 10px;
+            background: #AC7BF3;
+            border-radius: 50%;
+            opacity: 0;
+            transform: scale(0);
+            transition: all 0.2s;
+        }
+
+        .task-text {
+            flex-grow: 1;
+            transition: color 0.3s;
+            word-break: break-word;
+            /* Prevents overflow of long text */
+        }
+
+        /* --- Completed State Styles --- */
+        .todo-item.completed .radio-circle::after {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .todo-item.completed .task-text {
+            text-decoration: line-through;
+            color: #B0B0B0;
+        }
+
+        .delete-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #999;
+            opacity: 0;
+            transition: opacity 0.3s, color 0.2s;
+            display: flex;
+            align-items: center;
+            padding: 5px;
+        }
+
+        .todo-item.completed .delete-btn {
+            opacity: 1;
+        }
+
+        .delete-btn:hover {
+            color: #ff4d4d;
+        }
+
+        /* --- New Task Button --- */
+        .add-btn {
+            position: absolute;
+            bottom: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #AC7BF3;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 30px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(172, 123, 243, 0.4);
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 10;
+        }
+
+        .add-btn:hover {
+            transform: translateX(-50%) translateY(-2px);
+            box-shadow: 0 6px 20px rgba(172, 123, 243, 0.6);
+        }
+
+        /* --- Modal / Popup Styles --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            /* Dimmed background */
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            backdrop-filter: blur(2px);
+        }
+
+        .modal-box {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            width: 300px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            animation: popUp 0.3s ease;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .modal-input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #eee;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .modal-input:focus {
+            border-color: #AC7BF3;
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .btn-cancel {
+            background: #f0f0f0;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            color: #666;
+        }
+
+        .btn-add {
+            background: #AC7BF3;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            color: white;
+        }
+
+        /* --- Animations --- */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes popUp {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="todo-container">
+
+        <div class="header">
+            <div class="header-icon" onclick="toggleMenu()">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="3" y1="12" x2="21" y2="12"></line>
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <line x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
+            </div>
+
+            <div class="menu-dropdown" id="menuDropdown">
+                <div class="menu-item" onclick="toggleMenu()">Profile</div>
+                <div class="menu-item" onclick="toggleMenu()">Settings</div>
+                <div class="menu-item" onclick="toggleMenu()">Logout</div>
+            </div>
+
+            <div class="header-title">Website todo</div>
+        </div>
+
+        <ul class="todo-list" id="todoList">
+            <li class="todo-item" onclick="toggleTask(this)">
+                <div class="radio-circle"></div>
+                <span class="task-text">Styleguide creation</span>
+                <button class="delete-btn" onclick="deleteTask(event, this)">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                </button>
+            </li>
+
+            <li class="todo-item completed" onclick="toggleTask(this)">
+                <div class="radio-circle"></div>
+                <span class="task-text">Send wireframes</span>
+                <button class="delete-btn" onclick="deleteTask(event, this)">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                </button>
+            </li>
+
+            <li class="todo-item" onclick="toggleTask(this)">
+                <div class="radio-circle"></div>
+                <span class="task-text">Readability About page</span>
+                <button class="delete-btn" onclick="deleteTask(event, this)">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                </button>
+            </li>
+
+            <li class="todo-item" onclick="toggleTask(this)">
+                <div class="radio-circle"></div>
+                <span class="task-text">Check color contrast</span>
+                <button class="delete-btn" onclick="deleteTask(event, this)">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                </button>
+            </li>
+        </ul>
+
+        <button class="add-btn" onclick="openModal()">
+            + New task
+        </button>
+
+    </div>
+
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal-box">
+            <div class="modal-title">Add New Task</div>
+            <input type="text" id="newTaskInput" class="modal-input" placeholder="What needs to be done?">
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+                <button class="btn-add" onclick="confirmAddTask()">Add</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Menu Logic ---
+        function toggleMenu() {
+            const menu = document.getElementById('menuDropdown');
+            menu.classList.toggle('show');
+        }
+
+        // --- Task Logic ---
+        function toggleTask(element) {
+            element.classList.toggle('completed');
+        }
+
+        function deleteTask(event, button) {
+            event.stopPropagation(); // Parent click rokne ke liye
+            const listItem = button.closest('.todo-item');
+
+            // Animation for removing
+            listItem.style.opacity = '0';
+            listItem.style.transform = 'translateX(20px)';
+
+            setTimeout(() => {
+                listItem.remove();
+            }, 300);
+        }
+
+        // --- Modal (Popup) Logic ---
+        const modal = document.getElementById('modalOverlay');
+        const inputField = document.getElementById('newTaskInput');
+        const list = document.getElementById('todoList');
+
+        function openModal() {
+            modal.style.display = 'flex';
+            inputField.value = ''; // Input clear karo
+            inputField.focus(); // Cursor input me lao
+        }
+
+        function closeModal() {
+            modal.style.display = 'none';
+        }
+
+        // Close modal if clicked outside the white box
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                closeModal();
+            }
+        });
+
+        // Add Task functionality
+        function confirmAddTask() {
+            const taskValue = inputField.value.trim();
+
+            if (taskValue === "") {
+                alert("Please write a task name!");
+                return;
+            }
+
+            // Create new LI HTML string
+            // Main same HTML structure use kar raha hu jo upar hai taake design same rahe
+            const newItemHTML = `
+                <li class="todo-item new-item" onclick="toggleTask(this)">
+                    <div class="radio-circle"></div>
+                    <span class="task-text">${taskValue}</span>
+                    <button class="delete-btn" onclick="deleteTask(event, this)">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    </button>
+                </li>
+            `;
+
+            // List ke end mein add karo
+            list.insertAdjacentHTML('beforeend', newItemHTML);
+
+            closeModal();
+        }
+
+        // Allow "Enter" key to add task
+        inputField.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                confirmAddTask();
+            }
+        });
+
+    </script>
+
+</body>
+
+</html>
